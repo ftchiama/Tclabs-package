@@ -1,0 +1,39 @@
+name: Build R55 for Android ARM64
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Instalar Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+
+      - name: Instalar NDK
+        uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: r26b
+
+      - name: Instalar cargo-ndk
+        run: cargo install cargo-ndk
+
+      - name: Clonar R55 do GitLab
+        run: git clone https://gitlab.com/lab-tool/r55.git /tmp/r55
+
+      - name: Compilar para Android ARM64
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+        run: |
+          cd /tmp/r55
+          cargo ndk -t arm64-v8a build --release
+
+      - name: Upload binario
+        uses: actions/upload-artifact@v4
+        with:
+          name: r55-android-arm64
+          path: /tmp/r55/target/aarch64-linux-android/release/r55
